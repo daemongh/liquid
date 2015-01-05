@@ -1,0 +1,72 @@
+<!doctype html>
+<html ng-app="liquid">
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.0-beta.19/angular.min.js"></script>
+        <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+        <link rel="stylesheet" href="bootstrap.min.css">
+        <script>
+        var app = angular.module("liquid", []);
+
+        app.controller("SalesController", ['$scope', '$http', '$filter', function($scope, $http, $filter) {
+            $scope.Math = window.Math;
+            var orderBy = $filter('orderBy');
+            
+            $scope.order = function(predicate, reverse) {
+                $scope.sales = orderBy($scope.sales, predicate, reverse);
+            };
+            
+            $scope.refresh = function(hard) {
+                var url = '/sales';
+                if (hard) url += '?refresh=1';
+                $http.get(url).
+                    success(function(data, status, headers, config) {
+                        $scope.sales = data;
+                        $scope.order('-discount',false);
+                    }).
+                    error(function(data, status, headers, config) {
+                        // log error
+                    });
+            }
+
+            $scope.refresh();
+        }]);
+        </script>
+    </head>
+    <body ng-controller="SalesController">
+        <div class="well well-lg">
+            <button type="button" class="form-control btn btn-primary" ng-click="refresh(0)">Refresh</button>
+            <button type="button" class="form-control btn btn-warning" ng-click="refresh(1)">Hard Refresh</button>
+            <input type="text" class="form-control" placeholder="Search" ng-model="search">
+            <br>
+            <table class="table table-hover table-bordered">
+                <thead>
+                <tr>
+                    <td>{{sales.length}}</td>
+                    <td ng-click="reverse=!reverse; order('steam_id', reverse)">Steam ID</td>
+                    <td ng-click="reverse=!reverse; order('name', reverse)">Name</td>
+                    <td ng-click="reverse=!reverse; order('release_date', reverse)">Release</td>
+                    <td ng-click="reverse=!reverse; order('metascore', reverse)">Meta Score</td>
+                    <td ng-click="reverse=!reverse; order('discount', reverse)">Discount</td>
+                    <td ng-click="reverse=!reverse; order('list_price', reverse)">List Price</td>
+                    <td ng-click="reverse=!reverse; order('sale_price', reverse)">On Sale</td>
+                </tr>
+                </thead>
+                <tbody>
+                <tr ng-repeat="sale in sales | filter: search">
+                    <td><a href="{{sale.steam_link}}" target="_blank"><img src="{{sale.image}}"></a></td>
+                    <td><a href="{{sale.steam_link}}" target="_blank">{{sale.steam_id}}</a></td>
+                    <td>
+                        <a href="{{sale.steam_link}}" target="_blank">{{sale.name}}</a>
+                        <br>{{sale.tags.join(", ")}}
+                    </td>
+                    <td>{{sale.release_date}}</td>
+                    <td>{{sale.metascore}}</td>
+                    <td>{{Math.round(sale.discount * 100)}}%</td>
+                    <td><strike>${{sale.list_price}}</strike></td>
+                    <td>${{sale.sale_price}}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </body>
+</html>

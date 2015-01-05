@@ -1,0 +1,5 @@
+redis
+requests
+arrow
+flask
+beautifulsoup4
